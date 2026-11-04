@@ -6,7 +6,7 @@
   "homepage": "https://osopostal.com",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/osopostal/osopostal-js.git",
+    "url": "git+https://github.com/OsoPostal/osopostal-js.git",
     "directory": "packages/js"
   },
   "license": "MIT",
