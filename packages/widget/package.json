@@ -1,0 +1,40 @@
+{
+  "name": "@osopostal/widget",
+  "version": "0.0.0",
+  "description": "Widget de OsoPostal para autocompletar direcciones mexicanas por código postal con una etiqueta <script>.",
+  "keywords": ["codigo postal", "sepomex", "mexico", "autocompletado", "widget", "osopostal"],
+  "homepage": "https://osopostal.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/osopostal/osopostal-js.git",
+    "directory": "packages/widget"
+  },
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/osopostal.min.js",
+  "jsdelivr": "./dist/osopostal.min.js",
+  "unpkg": "./dist/osopostal.min.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/osopostal.min.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": ["dist"],
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "size": "node scripts/check-size.mjs",
+    "demo": "pnpm build && node ../../scripts/serve.mjs --port 5500 --root ."
+  },
+  "devDependencies": {
+    "@osopostal/js": "workspace:*"
+  }
+}

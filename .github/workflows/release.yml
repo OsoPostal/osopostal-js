@@ -1,0 +1,58 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+concurrency: release-${{ github.ref }}
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write # npm provenance
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: pnpm test
+
+      # Con changesets pendientes abre o actualiza el PR "Version Packages";
+      # al fusionarlo, publica en npm (build + presupuesto de tamaño + publish).
+      - name: Versionar o publicar
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          version: pnpm version-packages
+          publish: pnpm release
+          title: 'chore: version packages'
+          commit: 'chore: version packages'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Verificar jsDelivr con la versión mayor fijada
+        if: steps.changesets.outputs.published == 'true' && contains(steps.changesets.outputs.publishedPackages, '@osopostal/widget')
+        run: |
+          VERSION=$(node -p "require('./packages/widget/package.json').version")
+          MAJOR=${VERSION%%.*}
+          curl -fsS "https://purge.jsdelivr.net/npm/@osopostal/widget@${MAJOR}" > /dev/null || true
+          for attempt in 1 2 3 4 5 6; do
+            if curl -fsS "https://cdn.jsdelivr.net/npm/@osopostal/widget@${MAJOR}" | grep -q "\"${VERSION}\""; then
+              echo "jsDelivr sirve @osopostal/widget@${MAJOR} → ${VERSION}"
+              exit 0
+            fi
+            sleep 30
+          done
+          echo "jsDelivr todavía no sirve ${VERSION} en @${MAJOR}" >&2
+          exit 1

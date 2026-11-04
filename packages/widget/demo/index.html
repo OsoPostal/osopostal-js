@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Demo del widget de OsoPostal</title>
+    <style>
+      :root { color-scheme: light dark; font-family: system-ui, sans-serif; line-height: 1.5; }
+      body { max-width: 40rem; margin: 2rem auto; padding: 0 1rem; }
+      fieldset { border: 1px solid #8884; border-radius: .5rem; padding: 1rem; margin: 0 0 1rem; }
+      .grid { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem 1rem; }
+      .full { grid-column: 1 / -1; }
+      label { display: block; font-size: .875rem; font-weight: 600; margin-bottom: .25rem; }
+      .form-control { box-sizing: border-box; width: 100%; padding: .5rem; font: inherit; border: 1px solid #8888; border-radius: .375rem; }
+      button { font: inherit; padding: .5rem 1rem; border-radius: .375rem; border: 0; background: #b45309; color: #fff; cursor: pointer; }
+      .config { font-size: .875rem; }
+      .config .grid { grid-template-columns: 1fr 1fr auto; align-items: end; }
+      pre { background: #8881; padding: 1rem; border-radius: .5rem; overflow: auto; }
+      .hint { font-size: .875rem; opacity: .75; }
+      @media (max-width: 32rem) { .grid, .config .grid { grid-template-columns: 1fr; } }
+    </style>
+  </head>
+  <body>
+    <h1>Widget de OsoPostal</h1>
+    <p class="hint">Escribe un código postal (por ejemplo <code>06000</code>) y el widget llena el resto.</p>
+
+    <form class="config" id="config">
+      <fieldset>
+        <legend>Configuración de la demo</legend>
+        <div class="grid">
+          <div>
+            <label for="config-key">Key pública</label>
+            <input class="form-control" id="config-key" name="key" placeholder="osp_pk_...">
+          </div>
+          <div>
+            <label for="config-base-url">URL base de la API</label>
+            <input class="form-control" id="config-base-url" name="baseUrl">
+          </div>
+          <button>Aplicar</button>
+        </div>
+      </fieldset>
+    </form>
+
+    <form id="checkout" data-osopostal-form>
+      <fieldset>
+        <legend>Dirección de envío</legend>
+        <div class="grid">
+          <div class="full">
+            <label for="nombre">Nombre completo</label>
+            <input class="form-control" id="nombre" name="nombre" autocomplete="name" required>
+          </div>
+          <div class="full">
+            <label for="calle">Calle y número</label>
+            <input class="form-control" id="calle" name="calle" autocomplete="address-line1" required>
+          </div>
+          <div>
+            <label for="cp">Código postal</label>
+            <input class="form-control" id="cp" name="cp" inputmode="numeric" autocomplete="postal-code" maxlength="5" required data-osopostal="cp">
+          </div>
+          <div>
+            <label for="colonia">Colonia</label>
+            <input class="form-control" id="colonia" name="colonia" required data-osopostal="colonia">
+          </div>
+          <div>
+            <label for="municipio">Municipio o alcaldía</label>
+            <input class="form-control" id="municipio" name="municipio" required data-osopostal="municipio">
+          </div>
+          <div>
+            <label for="ciudad">Ciudad</label>
+            <input class="form-control" id="ciudad" name="ciudad" data-osopostal="ciudad">
+          </div>
+          <div class="full">
+            <label for="estado">Estado</label>
+            <!-- Nombres como los usan muchas tiendas: el widget los reconoce aunque no sean los oficiales. -->
+            <select class="form-control" id="estado" name="estado" required data-osopostal="estado">
+              <option value="">Selecciona tu estado</option>
+              <option>Aguascalientes</option>
+              <option>Baja California</option>
+              <option>Baja California Sur</option>
+              <option>Campeche</option>
+              <option>Chiapas</option>
+              <option>Chihuahua</option>
+              <option>Ciudad de México</option>
+              <option>Coahuila</option>
+              <option>Colima</option>
+              <option>Durango</option>
+              <option>Estado de México</option>
+              <option>Guanajuato</option>
+              <option>Guerrero</option>
+              <option>Hidalgo</option>
+              <option>Jalisco</option>
+              <option>Michoacán</option>
+              <option>Morelos</option>
+              <option>Nayarit</option>
+              <option>Nuevo León</option>
+              <option>Oaxaca</option>
+              <option>Puebla</option>
+              <option>Querétaro</option>
+              <option>Quintana Roo</option>
+              <option>San Luis Potosí</option>
+              <option>Sinaloa</option>
+              <option>Sonora</option>
+              <option>Tabasco</option>
+              <option>Tamaulipas</option>
+              <option>Tlaxcala</option>
+              <option>Veracruz</option>
+              <option>Yucatán</option>
+              <option>Zacatecas</option>
+            </select>
+          </div>
+        </div>
+      </fieldset>
+      <button>Enviar</button>
+    </form>
+
+    <h2>Datos enviados</h2>
+    <pre id="resultado">(todavía nada)</pre>
+
+    <h2>Eventos</h2>
+    <pre id="eventos"></pre>
+
+    <script>
+      // La demo lee la key y la URL base del query string, para probarla contra
+      // la app local (https://osopostal.test/v1) o contra el mock del E2E.
+      const params = new URLSearchParams(location.search);
+      const key = params.get('key') || '';
+      const baseUrl = params.get('baseUrl') || 'https://osopostal.test/v1';
+
+      document.querySelector('#config-key').value = key;
+      document.querySelector('#config-base-url').value = baseUrl;
+
+      document.querySelector('#checkout').addEventListener('submit', (event) => {
+        event.preventDefault();
+        const data = Object.fromEntries(new FormData(event.target));
+        document.querySelector('#resultado').textContent = JSON.stringify(data, null, 2);
+      });
+
+      const log = document.querySelector('#eventos');
+      for (const name of ['resolved', 'not-found', 'error']) {
+        document.addEventListener(`osopostal:${name}`, (event) => {
+          const { codigoPostal, error } = event.detail;
+          const line = `osopostal:${name} ${codigoPostal}${error ? ` (${error.code})` : ''}`;
+          log.textContent = `${line}\n${log.textContent}`;
+        });
+      }
+
+      if (key) {
+        const script = document.createElement('script');
+        script.src = '../dist/osopostal.min.js';
+        script.dataset.key = key;
+        script.dataset.baseUrl = baseUrl;
+        document.body.append(script);
+      } else {
+        log.textContent = 'Escribe una key pública arriba para activar el widget.';
+      }
+    </script>
+  </body>
+</html>

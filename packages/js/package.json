@@ -1,0 +1,41 @@
+{
+  "name": "@osopostal/js",
+  "version": "0.0.0",
+  "description": "Cliente de la API pública de OsoPostal y autocompletado de direcciones mexicanas por código postal.",
+  "keywords": ["codigo postal", "sepomex", "mexico", "autocompletado", "direcciones", "osopostal"],
+  "homepage": "https://osopostal.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/osopostal/osopostal-js.git",
+    "directory": "packages/js"
+  },
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./package.json": "./package.json"
+  },
+  "files": ["dist"],
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  }
+}
