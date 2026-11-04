@@ -1,6 +1,6 @@
 {
   "name": "@osopostal/widget",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "Widget de OsoPostal para autocompletar direcciones mexicanas por código postal con una etiqueta <script>.",
   "keywords": ["codigo postal", "sepomex", "mexico", "autocompletado", "widget", "osopostal"],
   "homepage": "https://osopostal.com",
