@@ -9,7 +9,7 @@ concurrency: release-${{ github.ref }}
 permissions:
   contents: write
   pull-requests: write
-  id-token: write # npm provenance
+  id-token: write # Trusted publishing (OIDC) en npm, sin NPM_TOKEN
 
 jobs:
   release:
@@ -17,17 +17,19 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
+      # Sin caché: en un build que publica, un caché envenenado llegaría a npm.
       - uses: actions/setup-node@v5
         with:
           node-version: 24
-          cache: pnpm
-          registry-url: https://registry.npmjs.org
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
       - run: pnpm test
 
       # Con changesets pendientes abre o actualiza el PR "Version Packages";
-      # al fusionarlo, publica en npm (build + presupuesto de tamaño + publish).
+      # al fusionarlo, publica en npm (build + exports + tamaño + publish).
+      # Trusted publishing: `pnpm publish` cambia el token OIDC de GitHub por
+      # uno temporal de npm y agrega provenance. No hay NPM_TOKEN; cada paquete
+      # tiene este repo y release.yml como trusted publisher en npmjs.com.
       - name: Versionar o publicar
         id: changesets
         uses: changesets/action@v1
@@ -38,8 +40,6 @@ jobs:
           commit: 'chore: version packages'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Verificar jsDelivr con la versión mayor fijada
         if: steps.changesets.outputs.published == 'true' && contains(steps.changesets.outputs.publishedPackages, '@osopostal/widget')

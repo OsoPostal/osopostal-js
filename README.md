@@ -59,7 +59,20 @@ snippet queda en sitios de terceros con la mayor fijada (`@1`).
 
 1. `pnpm changeset` en cada PR con cambios publicables.
 2. Al fusionar a `main`, el workflow `Release` abre el PR "Version Packages".
-3. Al fusionar ese PR, publica en npm (con provenance) y verifica que jsDelivr sirva la
-   nueva versión en `@osopostal/widget@<mayor>`.
+3. Al fusionar ese PR, publica en npm y verifica que jsDelivr sirva la nueva versión en
+   `@osopostal/widget@<mayor>`.
 
-El secreto `NPM_TOKEN` debe existir en el repo de GitHub.
+La publicación usa [trusted publishing](https://docs.npmjs.com/trusted-publishers/): no hay
+`NPM_TOKEN`. `pnpm publish` cambia el token OIDC de GitHub Actions por uno temporal de npm
+y agrega provenance. Cada paquete tiene configurado en npmjs.com (*Settings → Trusted
+publishing*) este trusted publisher:
+
+| Campo | Valor |
+| --- | --- |
+| Organization or user | `OsoPostal` |
+| Repository | `osopostal-js` |
+| Workflow filename | `release.yml` |
+| Allowed actions | `npm publish` |
+
+Un paquete nuevo debe existir en npm antes de configurar su trusted publisher, así que su
+primera versión se publica a mano (`npm login` y `pnpm release`, con 2FA).
