@@ -1,6 +1,6 @@
 {
   "name": "@osopostal/js",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Cliente de la API pública de OsoPostal y autocompletado de direcciones mexicanas por código postal.",
   "keywords": ["codigo postal", "sepomex", "mexico", "autocompletado", "direcciones", "osopostal"],
   "homepage": "https://osopostal.com",
