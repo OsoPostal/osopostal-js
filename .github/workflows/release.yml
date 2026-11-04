@@ -25,13 +25,14 @@ jobs:
       - run: pnpm build
       - run: pnpm test
 
-      # Con changesets pendientes abre o actualiza el PR "Version Packages";
-      # al fusionarlo, publica en npm (build + exports + tamaño + publish).
-      # Trusted publishing: `pnpm publish` cambia el token OIDC de GitHub por
-      # uno temporal de npm y agrega provenance. No hay NPM_TOKEN; cada paquete
-      # tiene este repo y release.yml como trusted publisher en npmjs.com.
-      - name: Versionar o publicar
-        id: changesets
+      # Con changesets pendientes abre o actualiza el PR "Version Packages".
+      # Sin changesets, `pnpm release` (build + exports + tamaño) deja en el
+      # staging de npm las versiones nuevas y crea sus tags; nada llega a npm
+      # hasta que un maintainer lo aprueba con 2FA (npmjs.com → Staged Packages).
+      # Trusted publishing: pnpm cambia el token OIDC de GitHub por uno temporal
+      # de npm y agrega provenance. No hay NPM_TOKEN.
+      # Tras aprobar el widget, correr a mano el workflow "Verificar jsDelivr".
+      - name: Versionar o enviar a staging
         uses: changesets/action@v1
         with:
           version: pnpm version-packages
@@ -40,19 +41,3 @@ jobs:
           commit: 'chore: version packages'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Verificar jsDelivr con la versión mayor fijada
-        if: steps.changesets.outputs.published == 'true' && contains(steps.changesets.outputs.publishedPackages, '@osopostal/widget')
-        run: |
-          VERSION=$(node -p "require('./packages/widget/package.json').version")
-          MAJOR=${VERSION%%.*}
-          curl -fsS "https://purge.jsdelivr.net/npm/@osopostal/widget@${MAJOR}" > /dev/null || true
-          for attempt in 1 2 3 4 5 6; do
-            if curl -fsS "https://cdn.jsdelivr.net/npm/@osopostal/widget@${MAJOR}" | grep -q "\"${VERSION}\""; then
-              echo "jsDelivr sirve @osopostal/widget@${MAJOR} → ${VERSION}"
-              exit 0
-            fi
-            sleep 30
-          done
-          echo "jsDelivr todavía no sirve ${VERSION} en @${MAJOR}" >&2
-          exit 1

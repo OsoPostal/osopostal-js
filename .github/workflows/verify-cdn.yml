@@ -1,0 +1,30 @@
+name: Verificar jsDelivr
+
+# Correr a mano después de aprobar una versión del widget en npm: purga el
+# caché de jsDelivr y comprueba que la versión mayor fijada (`@1`) sirva la
+# versión de packages/widget/package.json.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: jsDelivr sirve la versión nueva en la mayor fijada
+        run: |
+          VERSION=$(node -p "require('./packages/widget/package.json').version")
+          MAJOR=${VERSION%%.*}
+          curl -fsS "https://purge.jsdelivr.net/npm/@osopostal/widget@${MAJOR}" > /dev/null || true
+          for attempt in 1 2 3 4 5 6; do
+            if curl -fsS "https://cdn.jsdelivr.net/npm/@osopostal/widget@${MAJOR}" | grep -q "\"${VERSION}\""; then
+              echo "jsDelivr sirve @osopostal/widget@${MAJOR} → ${VERSION}"
+              exit 0
+            fi
+            sleep 30
+          done
+          echo "jsDelivr todavía no sirve ${VERSION} en @${MAJOR}" >&2
+          exit 1
